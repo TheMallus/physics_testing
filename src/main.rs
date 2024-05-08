@@ -1,5 +1,5 @@
 use bevy::{prelude::*, render::mesh::shape::Cube};
-use bevy_rapier3d::{prelude::*, rapier::dynamics::RigidBodyHandle};
+use bevy_rapier3d::{prelude::*, rapier::{control::EffectiveCharacterMovement, dynamics::RigidBodyHandle}};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use std::time::Duration;
 
@@ -7,11 +7,11 @@ fn main() {
     App::new() 
         .add_plugins(DefaultPlugins)
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
-        // .add_plugins(RapierDebugRenderPlugin::default())
+        .add_plugins(RapierDebugRenderPlugin::default())
         .add_systems(Startup, setup)
         .add_systems(Startup, setup_graphics)
         .add_systems(Update, (update_system, read_result_system))
-        .add_systems(Update, cast_ray)
+        // .add_systems(Update, cast_ray)
         .run();
     
 }
@@ -21,7 +21,7 @@ fn setup(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>
     commands.spawn((
         RigidBody::KinematicPositionBased,
         PbrBundle {
-            transform: Transform::from_xyz(0.0, 0.0, 0.0),
+            transform: Transform::from_xyz(1.1, 0.0, -0.8),
             mesh: meshes.add(Mesh::from(shape::Cube::new(2.0))),
             material: materials.add(Color::NAVY).into(),
             ..default()
@@ -56,7 +56,7 @@ fn setup(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>
 
     ));
 
-    let num = 6;
+    let num = 5;
     let rad = 1.0;
 
     let shift = rad * 2.0 + rad;
@@ -75,9 +75,9 @@ fn setup(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>
     for j in 0usize..10 {
         for i in 0..num {
             for k in 0usize..num {
-                let x = i as f32 * shift - centerx + offset;
+                let x = i as f32 * shift - centerx + offset + -10.0;
                 let y = j as f32 * shift + centery + 3.0;
-                let z = k as f32 * shift - centerz + offset;
+                let z = k as f32 * shift - centerz + offset + 2.0;
                 color += 1;
 
                 commands
@@ -122,7 +122,7 @@ fn setup_graphics(mut commands: Commands) {
 }
 fn update_system(mut controllers: Query<&mut KinematicCharacterController>, keys: Res<ButtonInput<KeyCode>>,
     mut centers: Query<(&mut Transform, &Center)>, mut commands: Commands, query: Query<Entity, With<Despawn>>,
-) {
+    mut materials: ResMut<Assets<StandardMaterial>>, mut meshes: ResMut<Assets<Mesh>>) {
     for mut controller in controllers.iter_mut() {
             if keys.pressed(KeyCode::KeyD) {
                 controller.translation = Some(Vec3::new(0.1, 0.0, -0.1));
@@ -140,19 +140,38 @@ fn update_system(mut controllers: Query<&mut KinematicCharacterController>, keys
             //     controller.translation = Some(Vec3::new(0.0, 1.0, 0.0));
             // }
             if keys.pressed(KeyCode::KeyH) {
+                commands.spawn((
+                    RigidBody::Dynamic,
+                    PbrBundle {
+                        transform: Transform::from_xyz(0.0,0.5,0.0),
+                        mesh: meshes.add(Mesh::from(Sphere::new(1.0))),
+                        material: materials.add(Color::RED).into(),
+                        ..default()
+                    },
+                    Collider::ball(1.0),
+                    Ccd::enabled(),
+                    Velocity {
+                        linvel: Vec3::new(1.0,-1.0,1.0),
+                        angvel: Vec3::new(0.0,0.0,0.0)
+                    },
+                    ColliderMassProperties::Density(2.0),
+                ));
+            }
+
+            if keys.pressed(KeyCode::KeyJ) {
                 for (mut transform, center) in &mut centers {
                     transform.scale = Vec3::splat(center.scale_factor);
                 }
-            }
-            if keys.pressed(KeyCode::KeyJ) {
-                for entity in &query {
-                    println!("Despawning ground entity");
-                    commands.entity(entity).despawn();
-                }
+                // for entity in &query {
+                //     println!("Despawning ground entity");
+                //     commands.entity(entity).despawn();
+                // }
             }
 
     }
 }
+
+
 
 fn read_result_system(controllers: Query<(Entity, &KinematicCharacterControllerOutput)>) {
     for (entity, output) in controllers.iter() {
@@ -186,6 +205,8 @@ fn cast_ray(rapier_context: Res<RapierContext>) {
     );
 }
 
+
+
 #[derive(Component)]
 struct Center {
     min_size: f32,
@@ -195,3 +216,4 @@ struct Center {
 
 #[derive(Component)]
 struct Despawn;
+
