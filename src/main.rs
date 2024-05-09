@@ -41,6 +41,9 @@ fn setup(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>
             scale_factor: 8.0,
         },
         Despawn,
+        Health {
+            health: 250.0,
+        },
     ));
     commands.spawn((
         RigidBody::Fixed,
@@ -96,6 +99,9 @@ fn setup(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>
                             Collider::cuboid(rad, rad, rad),
                             ColliderDebugColor(colors[color % 3]),
                             Ccd::enabled(),
+                            Health {
+                                health: 100.0,
+                            },
                         ));
                     });
             }
@@ -103,8 +109,34 @@ fn setup(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>
 
     //     offset -= 0.05 * rad * (num as f32 - 1.0);
      }
-}
 
+    // Create a text entity to display the health
+    // commands
+    //   .spawn(TextBundle {
+    //         text: Text {
+    //             sections: vec![TextSection {
+    //                 value: "Health: 100".to_string(),
+    //                 style: TextStyle {
+    //                     color: Color::rgb(1.0, 1.0, 1.0),
+    //                 },
+    //             }],
+    //             alignment: TextAlignment {
+    //                 horizontal: HorizontalAlign::Center,
+    //                 vertical: VerticalAlign::Center,
+    //             },
+    //         },
+    //         transform: Transform::from_translation(Vec3::new(0.0, 0.0, 10.0)),
+    //        ..Default::default()
+    //     })
+    //   .insert(HealthText);
+}
+// fn update_health_text(mut query: Query<(&Health, &mut Text)>, mut health_text_query: Query<&mut Text, With<HealthText>>) {
+//     for (health, mut text) in query.iter_mut() {
+//         for mut health_text in health_text_query.iter_mut() {
+//             health_text.sections[0].value = format!("Health: {}", health.0);
+//         }
+//     }
+// }
 fn setup_graphics(mut commands: Commands) {
     commands.spawn(PointLightBundle {
         point_light: PointLight {
@@ -162,13 +194,10 @@ fn update_system(mut controllers: Query<&mut KinematicCharacterController>, keys
                 for (mut transform, center) in &mut centers {
                     transform.scale = Vec3::splat(center.scale_factor);
                 }
-                // for entity in &query {
-                //     println!("Despawning ground entity");
-                //     commands.entity(entity).despawn();
-                // }
             }
 
     }
+    
 }
 
 
@@ -205,6 +234,20 @@ fn cast_ray(rapier_context: Res<RapierContext>) {
     );
 }
 
+// fn update_health(mut query: Query<(&mut Health, &RigidBodyVelocity)>, quer: Query<Entity, With<Despawn>>, mut commands: Commands) {
+//     for (mut health, velocity) in &mut query {
+//         if velocity > 1.0 {
+//             health.current -= 10.0;
+//         }
+//         if health.current < 0.0 {
+//             for entity in &query {
+//                     println!("Ded");
+//                     commands.entity(entity).despawn();
+//                 }
+//         }
+//     }
+// }
+
 
 
 #[derive(Component)]
@@ -217,3 +260,10 @@ struct Center {
 #[derive(Component)]
 struct Despawn;
 
+#[derive(Component)]
+struct Health {
+    health: f32,
+}
+
+#[derive(Component)]
+struct HealthText;
