@@ -1,4 +1,4 @@
-use bevy::ecs::component::Component;
+use bevy::prelude::*;
 
 
 #[derive(Component)]
@@ -8,22 +8,27 @@ pub struct Center {
     pub scale_factor: f32,
 }
 
+impl Center {
+    pub fn new(min_size: f32, max_size: f32, scale_factor: f32) -> Self {
+        Self { min_size, max_size, scale_factor }
+    }
+}
+
 #[derive(Component)]
 pub struct Despawn;
 
 /// Health points.
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub struct Health {
-    pub hp: i32,
-    pub max_hp: i32,
+    pub health: f32,
 
 }
 
-impl Default for Health {
-    fn default() -> Self {
-        Self {
-            hp: 100,
-            max_hp: 100,
-        }
+impl Health {
+    pub fn new(health: f32) -> Self {
+        Self {health}
     }
 }
+
+#[derive(Component)]
+pub struct HealthText;
